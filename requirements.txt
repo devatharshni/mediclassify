@@ -1,4 +1,2 @@
 streamlit
 scikit-learn>=1.7
-easyocr
-opencv-python-headless
