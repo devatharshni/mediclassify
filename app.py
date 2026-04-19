@@ -4,37 +4,21 @@ import sys
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package, "--quiet"])
 
-# Requirements for OCR and ML
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.naive_bayes import MultinomialNB
     from sklearn.pipeline import Pipeline
-    import easyocr
-    from PIL import Image
-    import numpy as np
 except ImportError:
     install("scikit-learn")
-    install("easyocr")
-    install("opencv-python-headless") 
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.naive_bayes import MultinomialNB
     from sklearn.pipeline import Pipeline
-    import easyocr
-    from PIL import Image
-    import numpy as np
 
 import streamlit as st
 import re
 import datetime
 
 st.set_page_config(page_title="MediClassify", page_icon="🏥", layout="wide", initial_sidebar_state="collapsed")
-
-# Initialize OCR Reader
-@st.cache_resource
-def load_ocr():
-    return easyocr.Reader(['en'])
-
-reader = load_ocr()
 
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'username' not in st.session_state: st.session_state.username = ""
@@ -69,12 +53,14 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif;}
 .hist-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#f0f0ff;}
 .hist-meta{font-size:11px;color:#9b98cc;margin:3px 0;}
 .hist-rep{font-size:12px;color:rgba(240,240,255,0.7);}
+.hist-rx{font-size:11px;color:#9b98cc;font-style:italic;margin-top:3px;}
 .hist-time{font-size:10px;color:#9b98cc;margin-top:4px;}
 .badge{font-size:10px;font-weight:700;padding:4px 13px;border-radius:20px;font-family:'Syne',sans-serif;letter-spacing:0.04em;text-transform:uppercase;}
 .b-rad{background:rgba(77,159,255,0.15);color:#4d9fff;border:1px solid rgba(77,159,255,0.3);}
 .b-lab{background:rgba(0,212,180,0.15);color:#00d4b4;border:1px solid rgba(0,212,180,0.3);}
 .b-card{background:rgba(255,107,157,0.15);color:#ff6b9d;border:1px solid rgba(255,107,157,0.3);}
 .b-clin{background:rgba(245,166,35,0.15);color:#f5a623;border:1px solid rgba(245,166,35,0.3);}
+.b-unk{background:rgba(155,152,204,0.15);color:#9b98cc;border:1px solid rgba(155,152,204,0.3);}
 .feature-card{background:#252360;border:1px solid #3d3a8a;border-radius:18px;padding:24px;text-align:center;}
 .feature-icon{font-size:36px;margin-bottom:12px;}
 .feature-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#f5a623;margin-bottom:8px;}
@@ -85,6 +71,9 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif;}
 .contact-value{font-size:14px;color:#f0f0ff;font-weight:500;margin-top:2px;}
 .flow-step{background:#252360;border:1px solid #3d3a8a;border-radius:11px;padding:11px 15px;margin:5px 0;font-size:13px;color:#f0f0ff;display:flex;align-items:center;gap:10px;}
 .footer-bar{text-align:center;margin-top:30px;padding:16px;border-top:1px solid #3d3a8a;font-size:12px;color:#9b98cc;}
+.divider{height:1px;background:#3d3a8a;margin:16px 0;}
+.pulse{display:inline-block;width:7px;height:7px;background:#f5a623;border-radius:50%;margin-right:6px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
 .stTextInput>div>div>input,.stTextArea>div>div>textarea,.stSelectbox>div>div{background-color:rgba(255,255,255,0.05)!important;border:1px solid #3d3a8a!important;border-radius:11px!important;color:#f0f0ff!important;}
 .stButton>button{background:linear-gradient(135deg,#f5a623,#d4881a)!important;color:#1e1c4a!important;border:none!important;border-radius:12px!important;font-family:'Syne',sans-serif!important;font-weight:800!important;font-size:14px!important;padding:11px 24px!important;width:100%!important;box-shadow:0 4px 22px rgba(245,166,35,0.35)!important;}
 label{color:#9b98cc!important;font-size:12px!important;}
@@ -162,7 +151,7 @@ def train_model():
     return model
 
 def clean_text(text):
-    text = str(text).lower()
+    text = text.lower()
     text = re.sub(r'[^a-z0-9\s]', ' ', text)
     return re.sub(r'\s+', ' ', text).strip()
 
@@ -172,6 +161,7 @@ def classify_report(model, text):
     proba = model.predict_proba([cleaned])[0]
     return category, round(max(proba) * 100)
 
+cat_color = {"Radiology":"#4d9fff","Lab Report":"#00d4b4","Cardiology":"#ff6b9d","Clinical Notes":"#f5a623","Unknown":"#9b98cc"}
 cat_css   = {"Radiology":"result-rad","Lab Report":"result-lab","Cardiology":"result-card","Clinical Notes":"result-clin","Unknown":"result-unk"}
 badge_css = {"Radiology":"b-rad","Lab Report":"b-lab","Cardiology":"b-card","Clinical Notes":"b-clin","Unknown":"b-unk"}
 model = train_model()
@@ -216,6 +206,13 @@ def show_login():
         password = st.text_input("Password", placeholder="Enter your password", type="password")
         st.markdown("<br>", unsafe_allow_html=True)
         login_btn = st.button("🔐  Login")
+        st.markdown(
+            '<div style="margin-top:16px;padding:12px;background:rgba(245,166,35,0.08);'
+            'border:1px solid rgba(245,166,35,0.2);border-radius:10px;font-size:12px;color:#9b98cc;">'
+            '<strong style="color:#f5a623">Demo accounts:</strong><br>'
+            '👤 admin / admin123 &nbsp;|&nbsp; 👤 doctor / medi2024 &nbsp;|&nbsp; 👤 student / project123</div>',
+            unsafe_allow_html=True
+        )
         st.markdown('</div>', unsafe_allow_html=True)
         if login_btn:
             if username in USERS and USERS[username] == password:
@@ -228,70 +225,232 @@ def show_login():
 
 def show_home():
     show_navbar()
-    st.markdown('<div style="text-align:center;padding:30px 0 20px;"><div style="display:inline-block;">' + SHIELD_BIG + '</div><div class="page-title">MEDICLASSIFY</div></div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div style="text-align:center;padding:30px 0 20px;">'
+        '<div style="display:inline-block;filter:drop-shadow(0 0 24px rgba(245,166,35,0.45))">' + SHIELD_BIG + '</div>'
+        '<div style="font-family:Syne,sans-serif;font-size:46px;font-weight:800;color:#f5a623;margin-top:8px;">MEDICLASSIFY</div>'
+        '<div style="font-size:16px;color:#9b98cc;font-style:italic;margin-top:6px;margin-bottom:16px;">Diagnose Faster. Treat Better.</div>'
+        '<div style="font-size:15px;color:rgba(240,240,255,0.7);max-width:560px;margin:0 auto;line-height:1.7;">'
+        'Welcome back, <strong style="color:#f5a623">' + st.session_state.username + '</strong>! 👋<br>'
+        'MediClassify uses AI to automatically classify medical reports.</div></div>',
+        unsafe_allow_html=True
+    )
+    st.markdown("<br>", unsafe_allow_html=True)
+    features = [
+        ("🤖","AI Classification","Naive Bayes ML algorithm"),
+        ("⚡","Instant Results","Results with confidence score"),
+        ("📋","Patient Records","Complete history storage"),
+        ("🔒","Secure Login","Username and password auth"),
+        ("📊","Live Dashboard","Real-time statistics"),
+        ("🏥","4 Categories","Radiology, Lab, Cardiology, Clinical"),
+    ]
     cols = st.columns(3)
-    feats = [("🤖","AI Engine"),("⚡","Instant Scan"),("📊","Smart Dashboard")]
-    for i, (icon, title) in enumerate(feats):
-        with cols[i]:
-            st.markdown(f'<div class="feature-card"><div class="feature-icon">{icon}</div><div class="feature-title">{title}</div></div>', unsafe_allow_html=True)
+    for i, (icon, title, desc) in enumerate(features):
+        with cols[i % 3]:
+            st.markdown(
+                '<div class="feature-card" style="margin-bottom:16px;">'
+                '<div class="feature-icon">' + icon + '</div>'
+                '<div class="feature-title">' + title + '</div>'
+                '<div class="feature-desc">' + desc + '</div></div>',
+                unsafe_allow_html=True
+            )
+    st.markdown("<br>", unsafe_allow_html=True)
+    _, mid, _ = st.columns([1, 1, 1])
+    with mid:
+        if st.button("🏥  Go to Dashboard →"):
+            st.session_state.page = "dashboard"
+            st.rerun()
 
 def show_about():
     show_navbar()
-    st.markdown('<div class="page-title">About Project</div><div class="glass-card">MediClassify is an AI-powered medical report classifier built for speed and accuracy.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-title">About MediClassify</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-sub">Learn about our project, technology, and team</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="glass-card"><div class="sec-title">Project overview</div>'
+        '<p style="font-size:14px;color:rgba(240,240,255,0.8);line-height:1.8;">'
+        '<strong style="color:#f5a623">MediClassify</strong> is a Placement Mini Project built using '
+        'Python and Machine Learning. It automatically classifies medical reports into '
+        'Radiology, Lab Reports, Cardiology, and Clinical Notes.</p></div>',
+        unsafe_allow_html=True
+    )
+    techs = [("🐍","Python 3","Main language"),("🤖","Scikit-Learn","Naive Bayes ML"),("📊","Streamlit","Web UI"),("🔤","TF-IDF","NLP vectorization")]
+    cols = st.columns(4)
+    for col, (icon, name, desc) in zip(cols, techs):
+        with col:
+            st.markdown(
+                '<div class="feature-card" style="margin-bottom:16px;">'
+                '<div class="feature-icon">' + icon + '</div>'
+                '<div class="feature-title">' + name + '</div>'
+                '<div class="feature-desc">' + desc + '</div></div>',
+                unsafe_allow_html=True
+            )
+    st.markdown('<div class="glass-card"><div class="sec-title">How it works</div>', unsafe_allow_html=True)
+    steps = [("📄","Medical report entered"),("🔤","Text cleaned with NLP"),("📐","TF-IDF vectorization"),("🤖","Naive Bayes predicts"),("✅","Output with confidence")]
+    for i, (icon, label) in enumerate(steps):
+        st.markdown('<div class="flow-step"><span style="font-size:20px">' + icon + '</span> <strong style="color:#f5a623">Step ' + str(i+1) + ':</strong> ' + label + '</div>', unsafe_allow_html=True)
+        if i < 4:
+            st.markdown('<div style="text-align:center;color:#f5a623;font-size:22px;margin:-2px 0">↓</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def show_contact():
     show_navbar()
-    st.markdown('<div class="page-title">Contact</div><div class="glass-card">Email: support@mediclassify.com</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-title">Contact Us</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-sub">Have a question? Send us a message!</div>', unsafe_allow_html=True)
+    left, right = st.columns([1.2, 0.8], gap="large")
+    with left:
+        st.markdown('<div class="glass-card"><div class="sec-title">Send a message</div>', unsafe_allow_html=True)
+        c_name    = st.text_input("Your name", placeholder="e.g. Rahul Kumar")
+        c_email   = st.text_input("Email", placeholder="e.g. rahul@email.com")
+        c_subject = st.selectbox("Subject", ["", "General Inquiry", "Technical Support", "Feedback", "Bug Report"])
+        c_msg     = st.text_area("Message", placeholder="Write your message here...", height=120)
+        if st.button("📨  Send Message"):
+            if not c_name or not c_email or not c_msg or not c_subject:
+                st.error("Please fill all fields!")
+            elif "@" not in c_email:
+                st.error("Enter valid email!")
+            else:
+                st.success("✅ Thank you " + c_name + "! We will reply to " + c_email + " soon.")
+        st.markdown('</div>', unsafe_allow_html=True)
+    with right:
+        contacts = [("📧","Email","mediclassify@gmail.com"),("📱","Phone","+91 98765 43210"),("📍","Location","Chennai, Tamil Nadu"),("🕐","Hours","Mon-Fri, 9AM-6PM")]
+        for icon, label, value in contacts:
+            st.markdown(
+                '<div class="contact-info-card"><div class="contact-icon">' + icon + '</div>'
+                '<div><div class="contact-label">' + label + '</div>'
+                '<div class="contact-value">' + value + '</div></div></div>',
+                unsafe_allow_html=True
+            )
 
 def show_dashboard():
     show_navbar()
-    st.markdown('<div class="page-title">Medical Dashboard</div>', unsafe_allow_html=True)
-    
-    # Stats row
-    cols = st.columns(4)
-    for i, (cat, count) in enumerate(st.session_state.counts.items()):
-        with cols[i]:
-            st.markdown(f'<div class="stat-box"><div class="stat-num">{count}</div><div class="stat-lbl">{cat}</div></div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div style="display:flex;align-items:center;justify-content:space-between;'
+        'background:#252360;border:1px solid #3d3a8a;border-radius:20px;padding:22px 32px;margin-bottom:24px;">'
+        '<div style="display:flex;align-items:center;gap:16px;">' + SHIELD +
+        '<div><div style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;color:#f5a623;">MEDICLASSIFY</div>'
+        '<div style="font-size:12px;color:#9b98cc;">Diagnose Faster. Treat Better.</div></div></div>'
+        '<div style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.35);'
+        'color:#f5a623;padding:8px 20px;border-radius:20px;font-size:13px;">'
+        '<span class="pulse"></span>AI Active</div></div>',
+        unsafe_allow_html=True
+    )
+    total = sum(st.session_state.counts.values())
+    c1, c2, c3, c4 = st.columns(4)
+    with c1: st.markdown('<div class="stat-box"><div class="stat-num">' + str(total) + '</div><div class="stat-lbl">Total</div></div>', unsafe_allow_html=True)
+    with c2: st.markdown('<div class="stat-box"><div class="stat-num" style="color:#4d9fff">' + str(st.session_state.counts["Radiology"]) + '</div><div class="stat-lbl">Radiology</div></div>', unsafe_allow_html=True)
+    with c3: st.markdown('<div class="stat-box"><div class="stat-num" style="color:#00d4b4">' + str(st.session_state.counts["Lab Report"]) + '</div><div class="stat-lbl">Lab Report</div></div>', unsafe_allow_html=True)
+    with c4: st.markdown('<div class="stat-box"><div class="stat-num" style="color:#ff6b9d">' + str(st.session_state.counts["Cardiology"]) + '</div><div class="stat-lbl">Cardiology</div></div>', unsafe_allow_html=True)
 
-    left, right = st.columns([1.5, 1], gap="large")
-    
+    left, right = st.columns([1.1, 0.9], gap="large")
     with left:
-        st.markdown('<div class="glass-card"><div class="sec-title">Classify Report</div>', unsafe_allow_html=True)
-        p_name = st.text_input("Patient Name")
-        
-        # --- IMAGE SCANNER ADDITION ---
-        uploaded_img = st.file_uploader("📷 Scan Prescription Image", type=['jpg','jpeg','png'])
-        ocr_text = ""
-        if uploaded_img:
-            with st.spinner("Extracting text from image..."):
-                img = Image.open(uploaded_img)
-                results = reader.readtext(np.array(img), detail=0)
-                ocr_text = " ".join(results)
-        
-        # Pre-fill text area if OCR has results, otherwise normal input
-        final_text = st.text_area("Report Content", value=ocr_text, height=150)
-        
-        if st.button("🚀 Analyze Report"):
-            if final_text:
-                cat, conf = classify_report(model, final_text)
-                st.session_state.counts[cat] += 1
-                st.session_state.history.insert(0, {"name": p_name, "cat": cat, "conf": conf, "time": datetime.datetime.now().strftime("%H:%M")})
-                st.markdown(f'<div class="{cat_css[cat]}"><div class="result-info">CONFIDENCE: {conf}%</div><div class="result-cat">{cat}</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="glass-card"><div class="sec-title">Patient information</div>', unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        with col1: p_name = st.text_input("Patient name", placeholder="e.g. Rahul Kumar")
+        with col2: p_age  = st.text_input("Age", placeholder="e.g. 35")
+        col3, col4 = st.columns(2)
+        with col3: p_gender = st.selectbox("Gender", ["", "Male", "Female", "Other"])
+        with col4: p_doc    = st.text_input("Doctor name", placeholder="e.g. Dr. Priya")
+        p_date = st.date_input("Date of visit")
+        st.markdown('<div class="divider"></div><div class="sec-title">Medical report</div>', unsafe_allow_html=True)
+        input_type = st.radio("Input type", ["📝 Type Report", "🖼️ Upload Image", "📝 + 🖼️ Both"], horizontal=True, label_visibility="collapsed")
+        p_report = ""
+        uploaded_img = None
+        if input_type in ["📝 Type Report", "📝 + 🖼️ Both"]:
+            p_report = st.text_area("Report / symptoms", placeholder="e.g. MRI scan shows fracture\nBlood test shows high glucose\nPatient has chest pain", height=100)
+        if input_type in ["🖼️ Upload Image", "📝 + 🖼️ Both"]:
+            uploaded_img = st.file_uploader("Upload prescription image", type=["jpg","jpeg","png","pdf"], label_visibility="collapsed")
+            if uploaded_img is not None and uploaded_img.type in ["image/jpeg","image/png","image/jpg"]:
+                st.image(uploaded_img, caption="Uploaded prescription", use_container_width=True)
+                st.markdown('<div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:10px;padding:10px;font-size:12px;color:#f5a623;margin-top:8px;">✅ Image uploaded! Type report text for AI classification.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+        p_rx = st.text_area("Prescription / notes", placeholder="e.g. Paracetamol 500mg twice daily", height=75)
+        classify_btn = st.button("▶  Classify Report")
         st.markdown('</div>', unsafe_allow_html=True)
+
+        if classify_btn:
+            if not p_report.strip():
+                st.error("Please type the report text to classify!")
+            else:
+                category, confidence = classify_report(model, p_report)
+                name  = p_name.strip() or "Unknown patient"
+                meta  = " · ".join(filter(None, [
+                    "Age " + p_age if p_age else "",
+                    p_gender,
+                    "Dr: " + p_doc if p_doc else ""
+                ]))
+                color = cat_color[category]
+                css   = cat_css[category]
+                has_img = uploaded_img is not None
+                img_badge = '<span style="background:rgba(245,166,35,0.15);color:#f5a623;border:1px solid rgba(245,166,35,0.3);padding:2px 10px;border-radius:10px;font-size:10px;margin-left:8px;">+ Image</span>' if has_img else ""
+                rx_html = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.12);font-size:12px;color:' + color + '">Rx: ' + p_rx + '</div>' if p_rx.strip() else ""
+                meta_html = " — " + meta if meta else ""
+                st.markdown(
+                    '<div class="' + css + '">'
+                    '<div style="font-size:12px;color:' + color + ';margin-bottom:4px;">Classification for ' + name + meta_html + ' ' + img_badge + '</div>'
+                    '<div class="result-cat" style="color:' + color + '">' + category + '</div>'
+                    '<div class="result-info" style="color:' + color + '">' + str(confidence) + '% confidence | Naive Bayes ML</div>'
+                    + rx_html + '</div>',
+                    unsafe_allow_html=True
+                )
+                st.session_state.counts[category] += 1
+                now = datetime.datetime.now()
+                st.session_state.history.insert(0, {
+                    "name": name, "age": p_age, "gender": p_gender, "doc": p_doc,
+                    "date": str(p_date), "time": now.strftime("%I:%M %p"),
+                    "report": p_report[:65] + ("..." if len(p_report) > 65 else ""),
+                    "rx": (p_rx[:50] + "...") if len(p_rx) > 50 else p_rx,
+                    "cat": category, "conf": confidence, "has_img": has_img
+                })
+                st.rerun()
 
     with right:
-        st.markdown('<div class="glass-card"><div class="sec-title">Recent History</div>', unsafe_allow_html=True)
-        for h in st.session_state.history[:5]:
-            st.markdown(f'<div class="hist-card"><div class="hist-name">{h["name"]}</div><div class="badge {badge_css[h["cat"]]}">{h["cat"]}</div><div class="hist-time">{h["time"]}</div></div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        with st.expander("📊 Project flow", expanded=False):
+            steps = [("📄","Medical report (text/image)"),("🔤","Clean text — NLP"),("🤖","Naive Bayes ML model"),("🎯","Predict category"),("✅","Output result")]
+            for i, (icon, label) in enumerate(steps):
+                st.markdown('<div class="flow-step"><span style="font-size:18px">' + icon + '</span> ' + label + '</div>', unsafe_allow_html=True)
+                if i < 4:
+                    st.markdown('<div style="text-align:center;color:#f5a623;font-size:20px;margin:-3px 0">↓</div>', unsafe_allow_html=True)
 
-# Navigation
+        st.markdown('<div class="sec-title" style="margin-top:16px">Classification history</div>', unsafe_allow_html=True)
+        if not st.session_state.history:
+            st.markdown('<div style="text-align:center;padding:36px 20px;color:#9b98cc;background:#252360;border:1px solid #3d3a8a;border-radius:16px;"><div style="font-size:38px;margin-bottom:10px">📋</div><div>No reports classified yet.</div></div>', unsafe_allow_html=True)
+        else:
+            for h in st.session_state.history[:12]:
+                meta = " · ".join(filter(None, [
+                    "Age " + h['age'] if h['age'] else "",
+                    h['gender'],
+                    "Dr: " + h['doc'] if h['doc'] else ""
+                ]))
+                color    = cat_color[h['cat']]
+                bc       = badge_css[h['cat']]
+                img_tag  = " 🖼️" if h.get('has_img') else ""
+                rx_line  = '<div class="hist-rx">Rx: ' + h['rx'] + '</div>' if h['rx'] else ""
+                meta_line = '<div class="hist-meta">' + meta + '</div>' if meta else ""
+                st.markdown(
+                    '<div class="hist-card">'
+                    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">'
+                    '<span class="hist-name">' + h['name'] + img_tag + '</span>'
+                    '<span class="badge ' + bc + '">' + h['cat'] + '</span></div>'
+                    + meta_line +
+                    '<div class="hist-rep">' + h['report'] + '</div>'
+                    + rx_line +
+                    '<div class="hist-time">' + h['date'] + ' at ' + h['time'] + ' | ' + str(h['conf']) + '% confidence</div>'
+                    '</div>',
+                    unsafe_allow_html=True
+                )
+            if st.button("🗑️ Clear history"):
+                st.session_state.history = []
+                st.session_state.counts  = {"Radiology":0,"Lab Report":0,"Cardiology":0,"Clinical Notes":0}
+                st.rerun()
+
+    st.markdown('<div class="footer-bar"><strong style="color:#f5a623">MEDICLASSIFY</strong> &nbsp;|&nbsp; Diagnose Faster. Treat Better. &nbsp;|&nbsp; Placement Mini Project</div>', unsafe_allow_html=True)
+
+# ROUTER
 if not st.session_state.logged_in:
     show_login()
 else:
-    if st.session_state.page == "home": show_home()
-    elif st.session_state.page == "about": show_about()
-    elif st.session_state.page == "contact": show_contact()
-    elif st.session_state.page == "dashboard": show_dashboard()
-
-st.markdown('<div class="footer-bar">© 2026 MediClassify AI System</div>', unsafe_allow_html=True)
+    if st.session_state.page == "home":       show_home()
+    elif st.session_state.page == "about":    show_about()
+    elif st.session_state.page == "contact":  show_contact()
+    elif st.session_state.page == "dashboard":show_dashboard()
+    else: show_home()
