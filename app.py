@@ -80,7 +80,36 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif;}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
 .ocr-box{background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.25);border-radius:14px;padding:14px 16px;margin-top:10px;font-size:13px;color:#f0f0ff;line-height:1.7;}
 .ocr-label{font-size:10px;color:#f5a623;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;}
-.stTextInput>div>div>input,.stTextArea>div>div>textarea,.stSelectbox>div>div{background-color:rgba(255,255,255,0.05)!important;border:1px solid #3d3a8a!important;border-radius:11px!important;color:#f0f0ff!important;}
+
+/* FIXED: Input text visibility and login fix */
+.stTextInput>div>div>input,
+.stTextInput>div>div>div>input,
+.stTextArea>div>div>textarea,
+.stSelectbox>div>div {
+    background-color:rgba(255,255,255,0.05)!important;
+    border:1px solid #3d3a8a!important;
+    border-radius:11px!important;
+    color:#f0f0ff!important;
+}
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"] {
+    background-color:rgba(255,255,255,0.05)!important;
+    border:1px solid #3d3a8a!important;
+    border-radius:11px!important;
+    color:#f0f0ff!important;
+}
+input::placeholder,
+textarea::placeholder {
+    color:#9b98cc!important;
+    opacity:1!important;
+}
+textarea {
+    color:#f0f0ff!important;
+    background-color:rgba(255,255,255,0.05)!important;
+}
+
 .stButton>button{background:linear-gradient(135deg,#f5a623,#d4881a)!important;color:#1e1c4a!important;border:none!important;border-radius:12px!important;font-family:'Syne',sans-serif!important;font-weight:800!important;font-size:14px!important;padding:11px 24px!important;width:100%!important;box-shadow:0 4px 22px rgba(245,166,35,0.35)!important;}
 label{color:#9b98cc!important;font-size:12px!important;}
 </style>
@@ -216,15 +245,17 @@ def show_login():
     _,mid,_=st.columns([1,1.2,1])
     with mid:
         st.markdown('<div class="glass-card"><div class="sec-title">Login to MediClassify</div>',unsafe_allow_html=True)
-        username=st.text_input("Username",placeholder="Enter your username")
-        password=st.text_input("Password",placeholder="Enter your password",type="password")
+        username=st.text_input("Username",placeholder="Enter your username",key="login_username")
+        password=st.text_input("Password",placeholder="Enter your password",type="password",key="login_password")
         st.markdown("<br>",unsafe_allow_html=True)
         login_btn=st.button("🔐  Login")
         st.markdown('<div style="margin-top:16px;padding:12px;background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:10px;font-size:12px;color:#9b98cc;"><strong style="color:#f5a623">Demo accounts:</strong><br>👤 admin / admin123 &nbsp;|&nbsp; 👤 doctor / medi2024 &nbsp;|&nbsp; 👤 student / project123</div>',unsafe_allow_html=True)
         st.markdown('</div>',unsafe_allow_html=True)
         if login_btn:
-            if username in USERS and USERS[username]==password:
-                st.session_state.logged_in=True; st.session_state.username=username; st.session_state.page="home"; st.rerun()
+            uname=username.strip()
+            pword=password.strip()
+            if uname in USERS and USERS[uname]==pword:
+                st.session_state.logged_in=True; st.session_state.username=uname; st.session_state.page="home"; st.rerun()
             else: st.error("❌ Wrong username or password!")
 
 def show_home():
@@ -337,7 +368,6 @@ def show_dashboard():
                 bg=cat_bg[category]
                 border=cat_border[category]
 
-                # ── RESULT CARD ──
                 st.markdown(
                     '<div class="result-main" style="background:'+bg+';border:1px solid '+border+';">'
                     '<div class="result-patient-info" style="color:'+color+';">'+name+((" — "+meta) if meta else "")+'</div>'
@@ -353,7 +383,6 @@ def show_dashboard():
                     unsafe_allow_html=True
                 )
 
-                # ── CONFIDENCE CHART ──
                 st.markdown("<div style='margin-top:16px;'>",unsafe_allow_html=True)
                 fig=go.Figure()
                 cats=list(all_proba.keys())
@@ -422,7 +451,6 @@ def show_dashboard():
             if st.button("🗑️ Clear history"):
                 st.session_state.history=[]; st.session_state.counts={"Radiology":0,"Lab Report":0,"Cardiology":0,"Clinical Notes":0}; st.rerun()
 
-        # ── PIE CHART ──
         if sum(st.session_state.counts.values())>0:
             st.markdown('<div class="sec-title" style="margin-top:16px">Distribution chart</div>',unsafe_allow_html=True)
             labels=[k for k,v in st.session_state.counts.items() if v>0]
