@@ -216,10 +216,11 @@ def show_login():
     _,mid,_=st.columns([1,1.2,1])
     with mid:
         st.markdown('<div class="glass-card"><div class="sec-title">Login to MediClassify</div>',unsafe_allow_html=True)
-        username=st.text_input("Username",placeholder="Enter your username")
-        password=st.text_input("Password",placeholder="Enter your password",type="password")
-        st.markdown("<br>",unsafe_allow_html=True)
-        login_btn=st.button("🔐  Login")
+    with st.form("login_form"):
+       username = st.text_input("Username", placeholder="Enter your username")
+       password = st.text_input("Password", placeholder="Enter your password", type="password")
+       st.markdown("<br>", unsafe_allow_html=True)
+        login_btn = st.form_submit_button("🔐  Login")
         st.markdown('<div style="margin-top:16px;padding:12px;background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:10px;font-size:12px;color:#9b98cc;"><strong style="color:#f5a623">Demo accounts:</strong><br>👤 admin / admin123 &nbsp;|&nbsp; 👤 doctor / medi2024 &nbsp;|&nbsp; 👤 student / project123</div>',unsafe_allow_html=True)
         st.markdown('</div>',unsafe_allow_html=True)
         if login_btn:
