@@ -1,0 +1,81 @@
+text,label
+X-ray shows fracture in the left femur bone,Radiology
+MRI scan reveals herniated disc in lumbar region,Radiology
+CT scan of chest shows no signs of pneumonia,Radiology
+Ultrasound of abdomen shows gallstones present,Radiology
+X-ray of spine shows mild scoliosis,Radiology
+MRI of brain shows tumor in temporal lobe,Radiology
+Mammogram shows dense tissue with calcification,Radiology
+CT scan abdomen reveals liver lesion,Radiology
+Ultrasound shows enlarged spleen and kidney stones,Radiology
+Pet scan reveals metastatic activity in lymph nodes,Radiology
+X-ray chest shows pleural effusion on left side,Radiology
+MRI knee shows torn anterior cruciate ligament,Radiology
+CT head shows no intracranial hemorrhage,Radiology
+Ultrasound thyroid shows nodule of 1.2 cm,Radiology
+X-ray wrist shows hairline fracture,Radiology
+MRI spine shows compression fracture at L4,Radiology
+CT angiography shows pulmonary embolism,Radiology
+Ultrasound liver shows fatty infiltration,Radiology
+X-ray shoulder shows dislocation,Radiology
+MRI pelvis shows ovarian cyst,Radiology
+Blood test shows high glucose level indicating diabetes,Lab Report
+Hemoglobin level is low patient has anemia,Lab Report
+White blood cell count is elevated possible infection,Lab Report
+Urine test shows presence of protein and bacteria,Lab Report
+Thyroid function test shows hypothyroidism,Lab Report
+Liver enzymes are elevated possible hepatitis,Lab Report
+Platelet count is dangerously low,Lab Report
+Creatinine levels indicate chronic kidney disease,Lab Report
+Blood culture shows bacterial infection present,Lab Report
+Cholesterol panel shows LDL at critical level,Lab Report
+HbA1c level is 9.2 indicating uncontrolled diabetes,Lab Report
+Serum ferritin is low indicating iron deficiency,Lab Report
+Vitamin D levels are severely deficient,Lab Report
+Urine culture positive for E coli bacteria,Lab Report
+Blood urea nitrogen is elevated indicating kidney stress,Lab Report
+Prothrombin time is prolonged indicating clotting disorder,Lab Report
+Stool test positive for occult blood,Lab Report
+Calcium levels are critically low hypocalcemia,Lab Report
+Sodium levels are dangerously low hyponatremia,Lab Report
+TSH levels very high indicating severe hypothyroidism,Lab Report
+ECG shows irregular heartbeat and atrial fibrillation,Cardiology
+Patient has high blood pressure and chest pain,Cardiology
+Echocardiogram shows reduced ejection fraction,Cardiology
+Patient reports shortness of breath and palpitations,Cardiology
+Coronary angiogram shows 70 percent blockage in LAD,Cardiology
+Patient diagnosed with congestive heart failure,Cardiology
+Hypertension not controlled despite medication,Cardiology
+Troponin levels elevated after cardiac episode,Cardiology
+Patient has history of myocardial infarction,Cardiology
+Heart rate irregular and blood pressure dangerously high,Cardiology
+Stress test shows ST depression indicating ischemia,Cardiology
+Patient has severe aortic stenosis requiring intervention,Cardiology
+Holter monitor shows frequent premature ventricular contractions,Cardiology
+Patient has dilated cardiomyopathy with low EF of 30 percent,Cardiology
+Peripheral vascular disease with claudication in legs,Cardiology
+Deep vein thrombosis confirmed in left leg,Cardiology
+Patient has rheumatic heart disease with mitral regurgitation,Cardiology
+Cardiac catheterization shows triple vessel disease,Cardiology
+Patient presents with acute coronary syndrome,Cardiology
+Pericardial effusion detected on echocardiogram,Cardiology
+Patient complains of fever cough and body pain for 3 days,Clinical Notes
+Patient has headache and vomiting since morning,Clinical Notes
+Follow up visit for diabetes management and diet advice,Clinical Notes
+Patient prescribed antibiotics for throat infection,Clinical Notes
+Patient recovering well after surgery no complications,Clinical Notes
+Child brought in with high fever and skin rash,Clinical Notes
+Patient has seasonal allergies and runny nose,Clinical Notes
+Post operative care note for appendix removal,Clinical Notes
+Patient reports fatigue and loss of appetite,Clinical Notes
+Routine checkup all vitals normal no issues found,Clinical Notes
+Patient diagnosed with type 2 diabetes newly,Clinical Notes
+Patient has acute gastroenteritis with dehydration,Clinical Notes
+Migraine with aura recurring twice a week,Clinical Notes
+Patient has lower back pain radiating to left leg,Clinical Notes
+Asthma exacerbation treated with nebulization,Clinical Notes
+Patient has urinary tract infection treated with antibiotics,Clinical Notes
+Anxiety disorder with panic attacks referred to psychiatry,Clinical Notes
+Patient has dengue fever with thrombocytopenia,Clinical Notes
+Hypothyroidism follow up TSH levels improving,Clinical Notes
+Patient has skin rash diagnosed as contact dermatitis,Clinical Notes
