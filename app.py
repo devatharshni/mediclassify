@@ -25,7 +25,7 @@ st.set_page_config(page_title="MediClassify",page_icon="🏥",layout="wide",init
 # ── SESSION STATE ────────────────────────────────────────────
 for key,val in [('logged_in',False),('username',''),('page','login'),('auth_mode','login'),
                 ('history',[]),('counts',{"Radiology":0,"Lab Report":0,"Cardiology":0,"Clinical Notes":0,"Neurology":0,"Orthopedics":0,"Dermatology":0,"Pediatrics":0}),
-                ('last_result',None),('users',{"admin":"admin123","doctor":"medi2024","student":"project123"})]:
+                ('last_result',None),('users',{})]:
     if key not in st.session_state: st.session_state[key]=val
 
 # ── CSS ──────────────────────────────────────────────────────
@@ -85,16 +85,27 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif;}
 .hist-meta{font-size:11px;color:#8886c8;margin:3px 0;}
 .hist-rep{font-size:12px;color:rgba(240,240,255,0.7);margin:4px 0;}
 .hist-time{font-size:10px;color:#8886c8;margin-top:4px;}
-/* AUTH TABS */
-.auth-tab-active{background:linear-gradient(135deg,#f5a623,#d4881a);color:#1a0f00;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;padding:10px 32px;cursor:pointer;letter-spacing:0.04em;}
-.auth-tab-inactive{background:rgba(255,255,255,0.05);color:#b0aee8;border:1px solid #4a47a3;border-radius:12px;font-family:'Syne',sans-serif;font-weight:600;font-size:14px;padding:10px 32px;cursor:pointer;}
+
+/* ── AUTH STYLES ── */
+.auth-wrap{max-width:400px;margin:0 auto;padding:20px 0;}
+.auth-logo{text-align:center;padding:36px 0 28px;}
+.auth-logo-title{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#f5a623;letter-spacing:0.06em;margin-top:10px;}
+.auth-logo-sub{font-size:12px;color:#7875b5;margin-top:4px;font-style:italic;}
+.auth-card{background:#1e1c5e;border:1px solid #3d3a8a;border-radius:24px;padding:32px 30px 28px;}
+.auth-tabs{display:flex;gap:6px;margin-bottom:28px;background:#16144a;border-radius:14px;padding:4px;}
+.auth-tab{flex:1;text-align:center;padding:9px 0;border-radius:11px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.03em;}
+.auth-tab-on{background:linear-gradient(135deg,#f5a623,#d4881a);color:#1a0f00;}
+.auth-tab-off{color:#7875b5;}
+.auth-divider{height:1px;background:#2e2c6e;margin:20px 0;}
+.auth-switch{text-align:center;font-size:12px;color:#7875b5;margin-top:18px;}
+.auth-switch span{color:#f5a623;font-weight:600;cursor:pointer;}
 </style>
 """, unsafe_allow_html=True)
 
 SHIELD="""<svg width="46" height="52" viewBox="0 0 80 90" fill="none"><defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#f5c842"/><stop offset="100%" stop-color="#d4881a"/></linearGradient></defs><path d="M40 4L8 18V44C8 62 22 78 40 86C58 78 72 62 72 44V18L40 4Z" fill="url(#sg)"/><rect x="32" y="24" width="16" height="42" rx="5" fill="#2d2b6b"/><rect x="19" y="36" width="42" height="16" rx="5" fill="#2d2b6b"/></svg>"""
-SHIELD_BIG="""<svg width="88" height="98" viewBox="0 0 80 90" fill="none"><defs><linearGradient id="sg2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#f5c842"/><stop offset="100%" stop-color="#d4881a"/></linearGradient></defs><path d="M40 4L8 18V44C8 62 22 78 40 86C58 78 72 62 72 44V18L40 4Z" fill="url(#sg2)"/><rect x="32" y="24" width="16" height="42" rx="5" fill="#2d2b6b"/><rect x="19" y="36" width="42" height="16" rx="5" fill="#2d2b6b"/></svg>"""
+SHIELD_BIG="""<svg width="64" height="72" viewBox="0 0 80 90" fill="none"><defs><linearGradient id="sg2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#f5c842"/><stop offset="100%" stop-color="#d4881a"/></linearGradient></defs><path d="M40 4L8 18V44C8 62 22 78 40 86C58 78 72 62 72 44V18L40 4Z" fill="url(#sg2)"/><rect x="32" y="24" width="16" height="42" rx="5" fill="#2d2b6b"/><rect x="19" y="36" width="42" height="16" rx="5" fill="#2d2b6b"/></svg>"""
 
-# ── TRAIN MODEL (CACHED — loads once, stays fast) ────────────
+# ── TRAIN MODEL (CACHED) ─────────────────────────────────────
 @st.cache_resource(show_spinner=False)
 def train_model():
     csv_path="medical_data.csv"
@@ -104,9 +115,7 @@ def train_model():
         df=df.dropna()
         texts=df['text'].tolist(); labels=df['label'].tolist()
     else:
-        # 8 departments with rich training data
         data=[
-            # RADIOLOGY
             ("X-ray shows fracture in left femur bone","Radiology"),
             ("MRI scan reveals herniated disc in lumbar region","Radiology"),
             ("CT scan chest shows pneumonia consolidation","Radiology"),
@@ -122,7 +131,6 @@ def train_model():
             ("X-ray wrist shows hairline fracture distal radius","Radiology"),
             ("MRI pelvis shows ovarian cyst right side","Radiology"),
             ("CT head no intracranial hemorrhage detected","Radiology"),
-            # LAB REPORT
             ("Blood test shows high glucose level diabetes","Lab Report"),
             ("Hemoglobin low patient has iron deficiency anemia","Lab Report"),
             ("White blood cell count elevated infection likely","Lab Report"),
@@ -138,7 +146,6 @@ def train_model():
             ("Vitamin D severely deficient 12 ng/ml","Lab Report"),
             ("Urine culture E coli infection positive","Lab Report"),
             ("Sodium hyponatremia critically low electrolyte","Lab Report"),
-            # CARDIOLOGY
             ("ECG shows irregular heartbeat atrial fibrillation","Cardiology"),
             ("High blood pressure 180 over 110 hypertension","Cardiology"),
             ("Echocardiogram reduced ejection fraction 30 percent","Cardiology"),
@@ -154,7 +161,6 @@ def train_model():
             ("Holter monitor frequent PVCs arrhythmia","Cardiology"),
             ("Peripheral vascular disease claudication legs","Cardiology"),
             ("Patient rheumatic heart disease mitral regurgitation","Cardiology"),
-            # CLINICAL NOTES
             ("Patient fever cough body pain 3 days viral","Clinical Notes"),
             ("Headache vomiting since morning migraine","Clinical Notes"),
             ("Follow up diabetes management diet counseling","Clinical Notes"),
@@ -170,7 +176,6 @@ def train_model():
             ("Type 2 diabetes newly diagnosed fasting sugar 280","Clinical Notes"),
             ("Hypertension follow up BP 160 over 100 controlled","Clinical Notes"),
             ("Patient has high BP and diabetes with cholesterol","Clinical Notes"),
-            # NEUROLOGY
             ("Patient has recurrent seizures epilepsy EEG abnormal","Neurology"),
             ("Stroke right sided weakness facial drooping FAST","Neurology"),
             ("Parkinson disease tremor rigidity bradykinesia","Neurology"),
@@ -186,7 +191,6 @@ def train_model():
             ("Trigeminal neuralgia facial pain shooting electric","Neurology"),
             ("Cerebral palsy spasticity motor delay child","Neurology"),
             ("Bell palsy facial nerve weakness one side","Neurology"),
-            # ORTHOPEDICS
             ("Knee osteoarthritis joint pain stiffness swelling","Orthopedics"),
             ("Hip replacement surgery post operative fracture neck","Orthopedics"),
             ("Lumbar disc herniation sciatica back pain radiating leg","Orthopedics"),
@@ -202,7 +206,6 @@ def train_model():
             ("Stress fracture metatarsal foot runner athlete","Orthopedics"),
             ("Club foot congenital deformity infant casting","Orthopedics"),
             ("Osteomyelitis bone infection fever bone pain","Orthopedics"),
-            # DERMATOLOGY
             ("Psoriasis plaques scaly red patches elbows knees","Dermatology"),
             ("Eczema atopic dermatitis itchy rash dry skin","Dermatology"),
             ("Acne vulgaris comedones pustules face back","Dermatology"),
@@ -218,7 +221,6 @@ def train_model():
             ("Herpes zoster shingles painful rash vesicles","Dermatology"),
             ("Drug rash adverse reaction skin eruption medication","Dermatology"),
             ("Cellulitis bacterial skin infection warmth redness","Dermatology"),
-            # PEDIATRICS
             ("Child fever convulsion febrile seizure 2 years old","Pediatrics"),
             ("Infant not gaining weight failure to thrive feeding","Pediatrics"),
             ("Child developmental delay speech motor milestone","Pediatrics"),
@@ -345,64 +347,99 @@ def show_navbar():
             if st.button("🚪 Logout"): st.session_state.logged_in=False; st.session_state.page="login"; st.session_state.auth_mode="login"; st.rerun()
     st.markdown("<hr style='border:none;border-top:1px solid #3d3a8a;margin:0 0 20px 0'>",unsafe_allow_html=True)
 
-# ── AUTH PAGE (LOGIN + SIGNUP) ────────────────────────────────
+# ── AUTH PAGE — CLEAN & MINIMAL ───────────────────────────────
 def show_auth():
-    st.markdown('<div style="text-align:center;padding:30px 0 6px;"><div style="display:inline-block;filter:drop-shadow(0 0 28px rgba(245,166,35,0.55))">'+SHIELD_BIG+'</div><div style="font-family:Syne,sans-serif;font-size:36px;font-weight:800;color:#f5a623;letter-spacing:0.05em;margin-top:8px;">MEDICLASSIFY</div><div style="font-size:13px;color:#b0aee8;font-style:italic;margin-top:5px;">Diagnose Faster. Treat Better.</div></div>',unsafe_allow_html=True)
+    # Centered logo
+    st.markdown(
+        '<div style="text-align:center;padding:44px 0 32px;">'
+        '<div style="display:inline-block;filter:drop-shadow(0 0 24px rgba(245,166,35,0.5))">'+SHIELD_BIG+'</div>'
+        '<div style="font-family:Syne,sans-serif;font-size:30px;font-weight:800;color:#f5a623;letter-spacing:0.06em;margin-top:10px;">MEDICLASSIFY</div>'
+        '<div style="font-size:12px;color:#7875b5;margin-top:5px;font-style:italic;">Diagnose Faster. Treat Better.</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
-    _,mid,_=st.columns([1,1.1,1])
+    _,mid,_=st.columns([1,1.05,1])
     with mid:
-        # Tab toggle
+        # ── Tab switcher ──
         t1,t2=st.columns(2)
         with t1:
-            if st.button("🔐  Login",key="tab_login"):
+            login_active = st.session_state.auth_mode=="login"
+            if st.button("Login", key="tab_login",
+                         type="primary" if login_active else "secondary"):
                 st.session_state.auth_mode="login"; st.rerun()
         with t2:
-            if st.button("📝  Sign Up",key="tab_signup"):
+            if st.button("Sign Up", key="tab_signup",
+                         type="primary" if not login_active else "secondary"):
                 st.session_state.auth_mode="signup"; st.rerun()
 
-        st.markdown("<div style='height:8px'></div>",unsafe_allow_html=True)
+        st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
-        if st.session_state.auth_mode=="login":
-            st.markdown('<div style="background:#1e1c5e;border:1.5px solid #4a47a3;border-radius:20px;padding:28px 32px;"><div style="font-family:Syne,sans-serif;font-size:16px;font-weight:700;color:#f5a623;margin-bottom:16px;text-align:center;">Welcome Back 👋</div></div>',unsafe_allow_html=True)
-            username=st.text_input("👤  Username",placeholder="Enter your username",key="li_u")
-            password=st.text_input("🔑  Password",placeholder="Enter your password",type="password",key="li_p")
-            st.markdown("<br>",unsafe_allow_html=True)
-            if st.button("Login to MediClassify  →",key="login_btn"):
-                if username in st.session_state.users and st.session_state.users[username]==password:
-                    st.session_state.logged_in=True; st.session_state.username=username; st.session_state.page="home"; st.rerun()
-                else: st.error("❌ Wrong username or password!")
-            st.markdown('<div style="margin-top:14px;padding:12px 16px;background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:12px;font-size:12px;color:#b0aee8;"><strong style="color:#f5a623;">Demo:</strong> admin/admin123 &nbsp;|&nbsp; doctor/medi2024 &nbsp;|&nbsp; student/project123</div>',unsafe_allow_html=True)
+        # ── Card ──
+        st.markdown('<div style="background:#1e1c5e;border:1px solid #3d3a8a;border-radius:20px;padding:28px 26px;">',
+                    unsafe_allow_html=True)
+
+        if st.session_state.auth_mode == "login":
+            username = st.text_input("Username", placeholder="Enter username", key="li_u",
+                                     label_visibility="collapsed")
+            st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
+            password = st.text_input("Password", placeholder="Enter password",
+                                     type="password", key="li_p", label_visibility="collapsed")
+            st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
+            if st.button("Login →", key="login_btn"):
+                if username in st.session_state.users and st.session_state.users[username] == password:
+                    st.session_state.logged_in=True
+                    st.session_state.username=username
+                    st.session_state.page="home"
+                    st.rerun()
+                else:
+                    st.error("Wrong username or password.")
+            st.markdown(
+                '<div style="text-align:center;margin-top:16px;font-size:12px;color:#7875b5;">'
+                'No account? <span style="color:#f5a623;cursor:pointer;font-weight:600;" '
+                'onclick="">Switch to Sign Up above</span></div>',
+                unsafe_allow_html=True
+            )
 
         else:
-            st.markdown('<div style="background:#1e1c5e;border:1.5px solid #4a47a3;border-radius:20px;padding:28px 32px;"><div style="font-family:Syne,sans-serif;font-size:16px;font-weight:700;color:#f5a623;margin-bottom:16px;text-align:center;">Create Account 🏥</div></div>',unsafe_allow_html=True)
-            su_name=st.text_input("👤  Full name",placeholder="Enter your full name",key="su_n")
-            su_user=st.text_input("🪪  Username",placeholder="Choose a username",key="su_u")
-            su_email=st.text_input("📧  Email",placeholder="Enter your email",key="su_e")
-            su_role=st.selectbox("🏥  Role",["","Doctor","Nurse","Lab Technician","Radiologist","Student","Other"],key="su_r")
-            su_pass=st.text_input("🔑  Password",placeholder="Choose a password (min 6 chars)",type="password",key="su_p")
-            su_pass2=st.text_input("🔑  Confirm password",placeholder="Re-enter your password",type="password",key="su_p2")
-            st.markdown("<br>",unsafe_allow_html=True)
-            if st.button("Create Account  →",key="signup_btn"):
-                if not su_name or not su_user or not su_email or not su_role or not su_pass:
-                    st.error("❌ Please fill all fields!")
-                elif "@" not in su_email:
-                    st.error("❌ Enter a valid email address!")
-                elif len(su_pass)<6:
-                    st.error("❌ Password must be at least 6 characters!")
-                elif su_pass!=su_pass2:
-                    st.error("❌ Passwords do not match!")
-                elif su_user in st.session_state.users:
-                    st.error("❌ Username already exists! Choose another.")
+            username = st.text_input("Username", placeholder="Choose a username", key="su_u",
+                                     label_visibility="collapsed")
+            st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
+            password = st.text_input("Password", placeholder="Choose a password (min 6 chars)",
+                                     type="password", key="su_p", label_visibility="collapsed")
+            st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
+            password2 = st.text_input("Confirm", placeholder="Confirm password",
+                                      type="password", key="su_p2", label_visibility="collapsed")
+            st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
+            if st.button("Create Account →", key="signup_btn"):
+                if not username or not password:
+                    st.error("Please fill all fields.")
+                elif len(password) < 6:
+                    st.error("Password must be at least 6 characters.")
+                elif password != password2:
+                    st.error("Passwords do not match.")
+                elif username in st.session_state.users:
+                    st.error("Username already taken. Try another.")
                 else:
-                    st.session_state.users[su_user]=su_pass
-                    st.session_state.logged_in=True
-                    st.session_state.username=su_user
-                    st.session_state.page="home"
-                    st.success("✅ Account created! Welcome to MediClassify!")
+                    st.session_state.users[username] = password
+                    st.session_state.logged_in = True
+                    st.session_state.username = username
+                    st.session_state.page = "home"
                     st.rerun()
-            st.markdown('<div style="margin-top:14px;padding:10px 14px;background:rgba(100,255,150,0.06);border:1px solid rgba(100,255,150,0.2);border-radius:10px;font-size:12px;color:#b0aee8;">Already have an account? Click <strong style="color:#f5a623;">Login</strong> above.</div>',unsafe_allow_html=True)
+            st.markdown(
+                '<div style="text-align:center;margin-top:16px;font-size:12px;color:#7875b5;">'
+                'Already have an account? Switch to Login above.</div>',
+                unsafe_allow_html=True
+            )
 
-    st.markdown('<div class="footer-bar"><strong style="color:#f5a623">MEDICLASSIFY v3.0</strong> &nbsp;|&nbsp; 8 Departments &nbsp;|&nbsp; Placement Mini Project</div>',unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown(
+        '<div style="text-align:center;margin-top:32px;font-size:11px;color:#4a4780;">'
+        'MEDICLASSIFY v3.0 &nbsp;·&nbsp; 8 Departments &nbsp;·&nbsp; Placement Mini Project'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
 # ── HOME ─────────────────────────────────────────────────────
 def show_home():
@@ -466,7 +503,6 @@ def render_result(r):
     name=r["name"]; meta=r["meta"]
     color=info["color"]; bg=info["bg"]; border=info["border"]
 
-    # RESULT CARD
     st.markdown(
         '<div style="background:'+bg+';border:2px solid '+border+';border-radius:22px;overflow:hidden;margin-bottom:18px;">'
         '<div style="padding:22px 26px;border-bottom:1px solid '+border+'30;display:flex;align-items:center;justify-content:space-between;">'
@@ -487,7 +523,6 @@ def render_result(r):
         '<div style="font-size:13px;color:rgba(255,255,255,0.85);line-height:1.75;">'+explanation+'</div>'
         '</div></div>',unsafe_allow_html=True)
 
-    # CHARTS
     ch1,ch2=st.columns(2)
     with ch1:
         fig_g=go.Figure(go.Indicator(
@@ -509,7 +544,6 @@ def render_result(r):
         fig_b.update_layout(paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="rgba(26,24,78,0.5)",font=dict(color="white",family="DM Sans"),title=dict(text="Department breakdown",font=dict(color=color,size=12)),xaxis=dict(range=[0,120],ticksuffix="%",gridcolor="rgba(255,255,255,0.05)",tickfont=dict(color="#8886c8",size=9)),yaxis=dict(gridcolor="rgba(0,0,0,0)",tickfont=dict(color="white",size=10)),showlegend=False,height=220,margin=dict(t=34,b=8,l=8,r=44))
         st.plotly_chart(fig_b,use_container_width=True)
 
-    # PRESCRIPTION
     rx_items="".join(['<div style="background:rgba(0,0,0,0.2);border:1px solid '+border+'40;border-radius:10px;padding:9px 13px;margin-bottom:7px;font-size:13px;color:rgba(255,255,255,0.9);display:flex;gap:10px;"><span style="color:'+color+';font-size:16px;flex-shrink:0;">💊</span><span>'+m+'</span></div>' for m in rx_data["medicines"]])
     advice_items="".join(['<div style="background:rgba(0,0,0,0.15);border-radius:8px;padding:7px 11px;margin-bottom:6px;font-size:12px;color:rgba(255,255,255,0.85);display:flex;gap:8px;"><span style="color:'+color+';flex-shrink:0;">✦</span><span>'+a+'</span></div>' for a in rx_data["advice"]])
     diet_items="".join(['<div style="background:rgba(0,0,0,0.15);border-radius:8px;padding:6px 11px;margin-bottom:5px;font-size:12px;color:rgba(255,255,255,0.8);">🥗 '+d+'</div>' for d in rx_data["diet"]])
@@ -567,7 +601,6 @@ def show_dashboard():
         if classify_btn:
             if not p_report.strip(): st.error("⚠️ Please enter a report or upload a readable image!")
             else:
-                # Fast classify — cached
                 category,confidence,all_proba=classify_cached(p_report)
                 severity,sev_class,sev_icon,sev_msg=get_severity(confidence)
                 explanation=get_explanation(category,confidence)
